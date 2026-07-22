@@ -342,6 +342,23 @@
       list.insertBefore(card, list.firstChild);
     }
 
+    var RSVP_KEY="mohamed-maha-rsvp-v1";
+    function readLocalRows(){
+      try{ return JSON.parse(localStorage.getItem(RSVP_KEY)||"[]"); }catch(e){ return []; }
+    }
+    function writeLocalRows(rows){
+      try{ localStorage.setItem(RSVP_KEY, JSON.stringify(rows)); }catch(e){}
+    }
+    function mergeRows(a,b){
+      var map={}, out=[];
+      (a||[]).concat(b||[]).forEach(function(r){
+        if(!r) return;
+        var id=r.id||(r.guest_name+"|"+r.created_at+"|"+(r.message||""));
+        if(map[id]) return; map[id]=1; out.push(r);
+      });
+      out.sort(function(x,y){ return String(y.created_at||"").localeCompare(String(x.created_at||"")); });
+      return out;
+    }
     function renderWishes(rows){
       var list=document.getElementById("da3wa-wish-list"); if(!list) return;
       list.innerHTML="";
@@ -350,14 +367,32 @@
         list.innerHTML='<div class="wishes-empty" id="da3wa-wishes-empty">كن أول من يكتب تهنئة ✿</div>';
         return;
       }
+      // newest first already — append in reverse via addWish(insert first)
       withMsg.slice().reverse().forEach(function(r){ addWish(r.guest_name||"ضيف", r.message); });
     }
     function loadWishes(){
-      fetch("/api/rsvp").then(function(r){return r.json();}).then(function(j){
-        if(j && j.ok) renderWishes(j.rows||[]);
-      }).catch(function(){});
+      var local=readLocalRows();
+      // ملف JSON ثابت (يشتغل من CDN / GitHub Pages بدون npm)
+      fetch("data/rsvp.json",{cache:"no-store"}).then(function(r){return r.json();}).then(function(fileRows){
+        var rows=mergeRows(Array.isArray(fileRows)?fileRows:[], local);
+        renderWishes(rows);
+      }).catch(function(){
+        // لو السيرفر موجود
+        fetch("/api/rsvp").then(function(r){return r.json();}).then(function(j){
+          if(j && j.ok) renderWishes(mergeRows(j.rows||[], local));
+          else renderWishes(local);
+        }).catch(function(){ renderWishes(local); });
+      });
     }
     loadWishes();
+
+    function showThanks(name,msg,attending,extra){
+      if(msg) addWish(name,msg);
+      var okHtml='<div class="ok"><div class="emoji">🎉</div><h3>'+"شكراً لتأكيدك!"+'</h3><p class="sub">'+"بانتظارك بكل شوق"+'</p></div>';
+      document.getElementById('da3wa-rsvp-card').innerHTML=okHtml;
+      if(STORY && attending==='yes' && name) offerStory(name);
+      if(extra && extra.ticket){ /* optional server ticket ignored on static */ }
+    }
 
     var f=document.getElementById('da3wa-rsvp-form'),err=document.getElementById('da3wa-err');
     f.addEventListener('submit',function(e){e.preventDefault();err.textContent='';
@@ -365,31 +400,32 @@
       var name=f.guest_name.value.trim();
       var msg=f.message?f.message.value.trim():'';
       if(WO && !msg){err.textContent="اكتب تهنئتك أولاً 💌";btn.disabled=false;return;}
-      var data={invitation_id:inv,guest_name:name,attending:att,guests:WO?0:comp+1,message:msg};
+      if(!name){err.textContent="الاسم مطلوب";btn.disabled=false;return;}
+      var row={
+        id:(window.crypto&&crypto.randomUUID)?crypto.randomUUID():("r-"+Date.now()),
+        guest_name:name,
+        attending:att,
+        guests:WO?0:comp+1,
+        message:msg,
+        created_at:new Date().toISOString()
+      };
+      var data={invitation_id:inv,guest_name:name,attending:att,guests:row.guests,message:msg};
       if(LINKC) data.link_code=LINKC;
+
+      function saveLocalAndDone(){
+        var rows=readLocalRows(); rows.push(row); writeLocalRows(rows);
+        showThanks(name,msg,att);
+      }
+
+      // جرّب API لو السيرفر شغال، وإلا احفظ محلياً + في JSON عبر التحميل لاحقاً
       fetch("/api/rsvp",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(data)})
         .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
         .then(function(res){
           if(res.ok){
-            if(msg) addWish(name,msg);
-            /* النصوص مغلّفة بـjs() فتصير نصوص JS آمنة — الفواصل العليا في الإنجليزية (you'll)
-               كانت تُغلق النص المفرد وتكسر السكربت كله (أزرار نعم/لا والعدّاد تموت) */
-            var okHtml='<div class="ok"><div class="emoji">🎉</div><h3>'+"شكراً لتأكيدك!"+'</h3><p class="sub">'+"بانتظارك بكل شوق"+'</p>';
-            /* بطاقة الدخول (VIP): رمز QR كامل مباشرة + زر حفظ صورة البطاقة */
-            if(res.j.ticket){
-              var tk=encodeURIComponent(res.j.ticket);
-              okHtml+='<div class="ticket"><p class="ticket-title">'+"🎟️ بطاقة الدخول"+'</p>'
-                +'<img class="ticket-qr" src="/ci/'+tk+'/qr" alt="QR"/>'
-                +'<p class="ticket-hint">'+"📌 مهم: احفظ البطاقة بصورك الآن — تُطلب منك على باب القاعة"+'</p>'
-                +'<button type="button" class="ticket-save" data-t="'+tk+'" data-name="'+encodeURIComponent(name)+'" data-comp="'+(att==='yes'?comp:0)+'">'+"⬇️ احفظ البطاقة"+'</button>'
-                +'<a class="ticket-open" href="/ci/'+tk+'">'+"🎟️ بطاقة الدخول — احفظها"+'</a></div>';
-            }
-            okHtml+='</div>';
-            document.getElementById('da3wa-rsvp-card').innerHTML=okHtml;
-            if(res.j.ticket) wireTicketSave();
-            if(STORY && att==='yes' && name) offerStory(name);
-          } else {err.textContent=res.j.error||"تعذّر الإرسال، حاول مجدداً";btn.disabled=false;}
-        }).catch(function(){err.textContent="تعذّر الإرسال، تحقّق من الاتصال";btn.disabled=false;});
+            var rows=readLocalRows(); rows.push(res.j.row||row); writeLocalRows(rows);
+            showThanks(name,msg,att,res.j);
+          } else { saveLocalAndDone(); }
+        }).catch(function(){ saveLocalAndDone(); });
     });
 
     /* ============ ستوري الحضور: توليد صورة مشاركة باسم الضيف ============ */

@@ -1,9 +1,0 @@
-{
-  "name": "mohameed-wedding-invite",
-  "private": true,
-  "version": "1.0.0",
-  "description": "دعوة زفاف محمد ومها مع حفظ تأكيد الحضور في JSON",
-  "scripts": {
-    "start": "node server.js"
-  }
-}

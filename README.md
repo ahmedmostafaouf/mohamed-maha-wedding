@@ -1,15 +1,25 @@
 # دعوة زفاف محمد & مها
 
-دعوة إلكترونية تفاعلية (قالب باب الفرح) مع تأكيد حضور يُحفظ في `data/rsvp.json`.
+موقع static بالكامل — **من غير npm**. الخطوط من Google Fonts (CDN).
 
-## تشغيل محلي
+## تشغيل
+
+افتح الملف مباشرة، أو أي استضافة static:
+
+- GitHub Pages
+- Netlify / Cloudflare Pages
+- أو أي CDN
+
+الملفات الأساسية: `index.html` + `templates/` + `data/rsvp.json`
+
+## تأكيد الحضور
+
+- يُعرض من `data/rsvp.json`
+- الردود الجديدة تُحفظ في المتصفح (localStorage)
+- لو شغّلت `node server.js` (اختياري، بدون حزم) الردود تتحفظ في الملف كمان
+
+## اختياري: سيرفر محلي بدون npm install
 
 ```bash
 node server.js
 ```
-
-ثم افتح: http://127.0.0.1:8765
-
-## النشر
-
-المشروع جاهز للنشر على Render عبر `render.yaml`.

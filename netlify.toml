@@ -1,0 +1,4 @@
+# Static site — no npm, no build
+[build]
+  publish = "."
+  command = "exit 0"

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: mohameed-wedding-invite
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: "npm install --omit=dev || true"
+    startCommand: "node server.js"
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20"

@@ -10,8 +10,6 @@ const WEDDING_CONFIG = (typeof window !== "undefined" && window.__INVITE__ && wi
   heroSub: "فتحنا باب فرحتنا… وطارت البشائر تدعوكم",
   verse: "وَمِنْ آيَاتِهِ أَنْ خَلَقَ لَكُم مِّنْ أَنفُسِكُمْ أَزْوَاجًا لِّتَسْكُنُوا إِلَيْهَا وَجَعَلَ بَيْنَكُم مَّوَدَّةً وَرَحْمَةً",
   invitationText: "بقلوبٍ مفعمةٍ بالفرح والسرور، تتشرف عائلة الهمشري بدعوتكم لمشاركتنا أجمل لحظات حياتنا في حفل زفاف محمد ومها. حضوركم شرفٌ لنا وبهجةٌ تكتمل بها فرحتنا.",
-  groomParents: "الشيخ عادل حمزة ياسين الهمشري",
-  brideParents: "الحاج أحمد محمد كمال شحاته",
   venueName: "Alura Wedding Hall", venueAddr: "Alura Wedding Hall",
   mapUrl: "https://www.google.com/maps?q=30.602571487426758,31.47001075744629&z=17&hl=ar",
   program: [
@@ -27,7 +25,6 @@ const WEDDING_CONFIG = (typeof window !== "undefined" && window.__INVITE__ && wi
   closingNote: "حضوركم يفتح أبواب سعادتنا",
   hashtag: "#محمد_ومها",
   contactLabel: "للتواصل والتأكيد", contactName: "عائلة الهمشري", contactPhone: "",
-  closingFamilies: "عائلة الهمشري",
   images: {},
 };
 function setText(id, v) { const el = document.getElementById(id); if (el && v != null) el.textContent = v; }
@@ -41,9 +38,8 @@ function fillContent() {
   setText("heroGroom", c.groom); setText("heroBride", c.bride);
   setText("heroInvite", c.heroSub); setText("heroDate", c.dateText);
   setText("verseText", c.verse); setText("invitationText", c.invitationText);
-  setText("groomParents", c.groomParents); setText("brideParents", c.brideParents);
   setText("venueName", c.venueName); setText("venueAddr", c.venueAddr);
-  setText("closingNote", c.closingNote); setText("closingFamilies", c.closingFamilies); setText("closingHashtag", c.hashtag);
+  setText("closingNote", c.closingNote); setText("closingHashtag", c.hashtag);
   const mapBtn = document.getElementById("mapBtn");
   if (mapBtn && c.mapUrl) mapBtn.href = c.mapUrl; else if (mapBtn) mapBtn.style.display = "none";
   buildTimeline(c.program); buildNotes(c.notes); buildContact(c);
